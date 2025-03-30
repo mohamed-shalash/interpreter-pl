@@ -40,6 +40,11 @@ public class FunctionObject implements Object {
         return sb.toString();
     }
 
+    public FunctionObject bind(Environment env) {
+        Environment newEnv = new Environment(env);
+        return new FunctionObject(this.parameters, this.body, newEnv);
+    }
+
     // Getters
     public List<Identifier> getParameters() {
         return parameters;
@@ -51,5 +56,15 @@ public class FunctionObject implements Object {
 
     public Environment getEnv() {
         return env;
+    }
+
+    @Override
+    public String toString() {
+
+        return "FunctionObject{" +
+                "parameters=" + parameters +
+                ", body=" + body +
+                ", env=" + env +
+                '}';
     }
 }

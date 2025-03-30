@@ -1,0 +1,26 @@
+class Animal { let name;  init(name) { this.name = name; }  speak() {  print(this.name + " makes a sound");    } }
+
+class Dog < Animal {  speak() {   print(this.name + " barks");     } }
+
+let dog = new Animal("Buddy");
+let dog = new Dog("Buddy");
+dog.speak();
+
+
+class Animal { let name;  init(name) { this.name = name; }  speak() {  print(this.name + " makes a sound");    } };
+class Dog < Animal {  speak() {   print(this.name + " barks");     } };
+class Cat < Dog {  speak() {   print(this.name + " meao");     } };
+
+let cat = new Cat("Buddy");
+cat.speak();
+-------------------------------------------------
+class Math { let name;  init(name) { this.name = name; } Add(x,y) { return x+y;} Minus(x,y) { return x-y;} };
+class Advanced < Math  { let name;  init(name) { this.name = name; } Multi(x,y) { return x*y;} devide(x,y) { return x/y;} };
+
+
+let num = new Advanced("Buddy");
+num.Minus(8,9);
+
+class Point { private let x = 0; let y = 0;  getX() { return this.x; } };
+
+let p = new Point();

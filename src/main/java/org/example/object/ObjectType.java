@@ -13,7 +13,9 @@ public enum ObjectType {
     ARRAY_OBJ ("ARRAY"),
     CONTINUE("CONTINUE"),
     BREAK("BREAK"),
-    HASH_OBJ ("HASH");
+    HASH_OBJ ("HASH"),
+    CLASS("CLASS"),
+    INSTANCE("INSTANCE"),;
 
     private final String name;
 

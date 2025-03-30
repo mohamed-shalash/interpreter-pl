@@ -1,6 +1,7 @@
 package org.example.parser;
 
 import org.example.ast.*;
+import org.example.ast.classes.*;
 import org.example.lexer.Lexer;
 import org.example.token.Token;
 
@@ -40,6 +41,7 @@ public class Parser {
         precedences.put(Token.TokenType.ASSIGN, EQUALS);
         precedences.put(Token.TokenType.LE, LESSGREATER);
         precedences.put(Token.TokenType.GE, LESSGREATER);
+        precedences.put(Token.TokenType.DOT, INDEX);
     }
 
     public Parser(Lexer l) {
@@ -69,6 +71,7 @@ public class Parser {
         registerInfix(Token.TokenType.ASSIGN, this::parseAssignmentExpression);
         registerInfix(Token.TokenType.LE, this::parseInfixExpression);
         registerInfix(Token.TokenType.GE, this::parseInfixExpression);
+        registerInfix(Token.TokenType.DOT, this::parseMemberExpression);
 
         registerPrefix(Token.TokenType.IDENT, this::parseIdentifier);
         registerPrefix(Token.TokenType.TRUE, this::parseBoolean);
@@ -81,6 +84,8 @@ public class Parser {
         registerPrefix(Token.TokenType.STRING, this::parseStringLiteral);
         registerPrefix(Token.TokenType.LBRACKET, this::parseArrayLiteral);
         registerPrefix(Token.TokenType.LBRACE, this::parseHashLiteral);
+        registerPrefix(Token.TokenType.NEW, this::parseNewInstance);
+        registerPrefix(Token.TokenType.THIS, this::parseThisExpression);
 
 
 
@@ -111,6 +116,8 @@ public class Parser {
                 statement = parseLetStatement();
             } else if (curToken.getType() == Token.TokenType.RETURN) {
                 statement = parseReturnStatement();
+            }else if (curToken.getType() == Token.TokenType.CLASS) {
+                statement = parseClassDeclaration();
             }
 
             /*else if (curToken.getType() == Token.TokenType.IF) {
@@ -492,19 +499,29 @@ public class Parser {
         return exp;
     }
     private Expression parseAssignmentExpression(Expression left) {
-        if (!(left instanceof Identifier)) {
-            errors.add("left-hand side of assignment must be an identifier");
+        Token token = curToken;
+
+        // Allow member expressions (this.x) and identifiers
+        if (!(left instanceof Identifier) && !(left instanceof MemberExpression)) {
+            errors.add("left-hand side of assignment must be identifier or property access");
             return null;
         }
-
-        Token token = curToken; // The '=' token
-        Identifier name = (Identifier) left;
 
         int precedence = curPrecedence();
         nextToken(); // Move past '='
         Expression value = parseExpression(precedence);
 
-        return new AssignmentExpression(token, name, value);
+        if (left instanceof MemberExpression) {
+            MemberExpression member = (MemberExpression) left;
+            return new PropertyAssignmentExpression(
+                    token,
+                    member.getObject(),
+                    member.getProperty(),
+                    value
+            );
+        }
+
+        return new AssignmentExpression(token, (Identifier) left, value);
     }
 
     private Identifier parseIdentifier() {
@@ -617,6 +634,141 @@ public class Parser {
         }
 
         return hash;
+    }
+
+    private Statement parseClassDeclaration() {
+        Token token = curToken; // 'class' token
+        nextToken(); // Move past 'class'
+
+        // Parse class name
+        if (!curTokenIs(Token.TokenType.IDENT)) {
+            errors.add("Expected class name after 'class'");
+            return null;
+        }
+        Identifier className = parseIdentifier();
+
+        Identifier superClass = null;
+        if (peekTokenIs(Token.TokenType.LT)) {  // Handle < operator
+            nextToken(); // Move past <
+            if (!expectPeek(Token.TokenType.IDENT)) {
+                errors.add("Expected superclass name after <");
+                return null;
+            }
+            superClass = parseIdentifier();
+        }
+        // Parse class body
+        if (!expectPeek(Token.TokenType.LBRACE)) {
+            return null;
+        }
+
+        List<ClassMember> members = new ArrayList<>();
+        while (!peekTokenIs(Token.TokenType.RBRACE) && !peekTokenIs(Token.TokenType.EOF)) {
+            nextToken(); // Move to member declaration
+
+            if (curTokenIs(Token.TokenType.PRIVATE)) {
+                // Handle private field declaration
+                nextToken(); // Move past 'private'
+                if (!curTokenIs(Token.TokenType.LET)) {
+                    errors.add("Expected 'let' after 'private'");
+                    return null;
+                }
+                FieldDeclaration field = parseFieldDeclaration();
+                field.setPrivate(true);
+                members.add(field);
+            } else if (curTokenIs(Token.TokenType.LET)) {
+                members.add(parseFieldDeclaration());
+            } else if (curTokenIs(Token.TokenType.IDENT)) {
+                members.add(parseMethodDeclaration());
+            }
+        }
+
+        if (!expectPeek(Token.TokenType.RBRACE)) {
+            return null;
+        }
+        nextToken();
+        if (peekTokenIs(Token.TokenType.SEMICOLON)) {
+            nextToken();
+        }
+        return new ClassDeclaration(token, className,superClass, members);
+    }
+
+    private FieldDeclaration parseFieldDeclaration() {
+        Token letToken = curToken;
+        nextToken(); // Move past 'let'
+
+        // Parse field name
+        Identifier name = parseIdentifier();
+
+        // Parse optional initialization
+        Expression initializer = null;
+        if (peekTokenIs(Token.TokenType.ASSIGN)) {
+            nextToken(); // Move past '='
+            nextToken(); // Move to initializer
+            initializer = parseExpression(LOWEST);
+        }
+
+        if (!expectPeek(Token.TokenType.SEMICOLON)) {
+            return null;
+        }
+
+        return new FieldDeclaration(letToken, name, initializer);
+    }
+
+    private MethodDeclaration parseMethodDeclaration() {
+        Token token = curToken; // Method name token
+
+        // Parse method name
+        Identifier name = parseIdentifier();
+
+        // Parse parameters
+        if (!expectPeek(Token.TokenType.LPAREN)) {
+            errors.add("expected '(' after method name");
+            return null;
+        }
+        List<Identifier> parameters = parseFunctionParameters();
+
+        // Parse method body
+        if (!expectPeek(Token.TokenType.LBRACE)) {
+            errors.add("expected '{' after method parameters");
+            return null;
+        }
+        BlockStatement body = parseBlockStatement();
+
+        return new MethodDeclaration(token, name, parameters, body);
+    }
+
+    private Expression parseNewInstance() {
+        Token token = curToken; // 'new' token
+        nextToken(); // Move past 'new'
+
+        if (!curTokenIs(Token.TokenType.IDENT)) {
+            errors.add("Expected class name after 'new'");
+            return null;
+        }
+        Identifier className = parseIdentifier();
+
+        // Parse arguments
+        if (!expectPeek(Token.TokenType.LPAREN)) return null;
+        List<Expression> args = parseCallArguments();
+
+        return new NewInstanceExpression(token, className, args);
+    }
+
+    private Expression parseThisExpression() {
+        return new ThisExpression(curToken);
+    }
+
+    private Expression parseMemberExpression(Expression left) {
+        Token token = curToken; // The DOT token
+        nextToken(); // Move past .
+
+        if (!curTokenIs(Token.TokenType.IDENT)) {
+            errors.add("Expected property name after '.'");
+            return null;
+        }
+
+        Identifier property = parseIdentifier();
+        return new MemberExpression(token, left, property);
     }
 
     private void parseError(String message) {

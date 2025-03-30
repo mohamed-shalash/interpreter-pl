@@ -70,6 +70,9 @@ public class Lexer {
             case '+':
                 tok = new Token(Token.TokenType.PLUS, String.valueOf(ch));
                 break;
+            case '.':
+                tok = new Token(Token.TokenType.DOT, String.valueOf(ch));
+                break;
             case '-':
                 tok = new Token(Token.TokenType.MINUS, String.valueOf(ch));
                 break;

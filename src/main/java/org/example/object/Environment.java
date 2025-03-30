@@ -33,7 +33,6 @@ public class Environment {
         store.put(name, value);
         return value;
     }
-
     public static Environment newEnclosed(Environment outer) {
         return new Environment(outer);
     }

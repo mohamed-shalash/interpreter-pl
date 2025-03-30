@@ -49,7 +49,14 @@ public class Token {
 
         //equlity
         EQ("=="),
-        NOT_EQ("!="),;
+        NOT_EQ("!="),
+        CLASS("CLASS"),
+        THIS("THIS"),
+        NEW("NEW"),
+        SUPER("SUPER"),
+        DOT("."),
+        PRIVATE("PRIVATE")
+        ;
 
         private final String literal;
 
@@ -80,6 +87,11 @@ public class Token {
         keywords.put("false", TokenType.FALSE);
         keywords.put("break", TokenType.BREAK);
         keywords.put("continue", TokenType.CONTINUE);
+        keywords.put("class", Token.TokenType.CLASS);
+        keywords.put("this", Token.TokenType.THIS);
+        keywords.put("new", Token.TokenType.NEW);
+        keywords.put("super", Token.TokenType.SUPER);
+        keywords.put("private", Token.TokenType.PRIVATE);
     }
 
     public Token(TokenType type, String literal) {

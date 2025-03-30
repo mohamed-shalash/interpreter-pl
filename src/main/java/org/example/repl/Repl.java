@@ -85,6 +85,8 @@ public class Repl {
 
         // Evaluate and print
         Object evaluated = Evaluator.eval(program, env);
+        //System.out.println("Evaluated: " + evaluated);
+        //System.out.println("Env after eval: " + env.get("dog"));
         if (evaluated != NullObject.NULL) {
             out.println(((org.example.object.Object) evaluated).inspect());
         }
