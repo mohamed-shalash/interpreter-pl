@@ -11,9 +11,9 @@ import java.util.*;
 public class Parser {
     public static final int LOWEST = 1;
     public static final int EQUALS = 2;       // ==
-    public static final int LESSGREATER = 3;  // > or <
-    public static final int OR = 4;           // || (New)
-    public static final int AND = 5;          // && (New)
+    public static final int LESSGREATER = 5;  // > or <
+    public static final int OR = 3;           // || (New)
+    public static final int AND = 4;          // && (New)
     public static final int SUM = 6;          // +
     public static final int PRODUCT = 7;      // *
     public static final int PREFIX = 8;       // -X or !X
@@ -76,8 +76,8 @@ public class Parser {
         registerInfix(Token.TokenType.LE, this::parseInfixExpression);
         registerInfix(Token.TokenType.GE, this::parseInfixExpression);
         registerInfix(Token.TokenType.DOT, this::parseMemberExpression);
-        registerInfix(Token.TokenType.AND, this::parseInfixExpression);
-        registerInfix(Token.TokenType.OR, this::parseInfixExpression);
+        registerInfix(Token.TokenType.AND, this::parseLogicalOperation);
+        registerInfix(Token.TokenType.OR, this::parseLogicalOperation);
 
         registerPrefix(Token.TokenType.IDENT, this::parseIdentifier);
         registerPrefix(Token.TokenType.TRUE, this::parseBoolean);
@@ -591,7 +591,14 @@ public class Parser {
 
         return new InfixExpression(token, left, operator, right);//8 * 2
     }
-
+    private Expression parseLogicalOperation(Expression left) {
+        Token token = curToken;
+        String operator = token.getLiteral();
+        int precedence = curPrecedence();
+        nextToken(); // Move past "and"/"or"
+        Expression right = parseExpression(precedence);
+        return new LogicalExpression(token, left, operator, right);
+    }
 
     private Expression parseOperatorExpression() {
         Expression left = parseIntegerLiteral();

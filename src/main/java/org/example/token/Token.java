@@ -40,8 +40,8 @@ public class Token {
         RETURN("return"),
         TRUE("true"),
         FALSE("false"),
-        AND("&&"),
-        OR("||"),
+        AND("and"),
+        OR("or"),
 
         BREAK("BREAK"),
         CONTINUE("CONTINUE"),
@@ -94,6 +94,8 @@ public class Token {
         keywords.put("new", Token.TokenType.NEW);
         keywords.put("super", Token.TokenType.SUPER);
         keywords.put("private", Token.TokenType.PRIVATE);
+        keywords.put("and", Token.TokenType.AND);
+        keywords.put("or", Token.TokenType.OR);
     }
 
     public Token(TokenType type, String literal) {

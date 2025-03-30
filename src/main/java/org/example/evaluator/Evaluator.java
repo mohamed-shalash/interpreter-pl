@@ -52,6 +52,10 @@ public class Evaluator {
             }
             return evalPrefixExpression(prefix.getOperator(), right);
         }
+        else if (node instanceof LogicalExpression) {
+            LogicalExpression logOp = (LogicalExpression) node;
+            return evalLogicalOperation(logOp, env);
+        }
         else if (node instanceof InfixExpression) {
             InfixExpression infix = (InfixExpression) node;
             Object left = eval(infix.getLeft(),env);
@@ -225,6 +229,31 @@ public class Evaluator {
     }
 
 
+    private static Object evalLogicalOperation(LogicalExpression logOp, Environment env) {
+        Object left = eval(logOp.getLeft(), env);
+        if (isError(left)) return left;
+
+        String operator = logOp.getOperator();
+        boolean leftTruthy = isTruthy(left);
+
+        // Short-circuit evaluation
+        if (operator.equals("and") || operator.equals("&&")) {
+            if (!leftTruthy) {
+                return EvaluatorConstants.FALSE;
+            }
+            Object right = eval(logOp.getRight(), env);
+            return nativeBoolToBooleanObject(isTruthy(right));
+        } else if (operator.equals("or") || operator.equals("||")) {
+            if (leftTruthy) {
+                return EvaluatorConstants.TRUE;
+            }
+            Object right = eval(logOp.getRight(), env);
+            return nativeBoolToBooleanObject(isTruthy(right));
+        } else {
+            return newError("unknown logical operator: " + operator);
+        }
+    }
+
     private static Object evalInfixExpression(String operator, Object left, Object right) {
         // Handle equality/inequality across types first
         switch (operator) {
@@ -232,17 +261,7 @@ public class Evaluator {
                 return nativeBoolToBooleanObject(areEqual(left, right));
             case "!=":
                 return nativeBoolToBooleanObject(!areEqual(left, right));
-            case "&&":
-                if (!(left instanceof BooleanObject) || !(right instanceof BooleanObject)) {
-                    return newError("type mismatch: " + type(left) + " && " + type(right));
-                }
-                return nativeBoolToBooleanObject(((BooleanObject) left).getValue() && ((BooleanObject) right).getValue());
-            case "||":
-                if (!(left instanceof BooleanObject) || !(right instanceof BooleanObject)) {
-                    return newError("type mismatch: " + type(left) + " || " + type(right));
-                }
-                return nativeBoolToBooleanObject(((BooleanObject) left).getValue() || ((BooleanObject) right).getValue());
-        }
+            }
 
         // Then check for type mismatch for other operators (x == 10) && (3 > 1)
         if (!left.type().equals(right.type())) {
