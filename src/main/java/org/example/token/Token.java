@@ -40,6 +40,8 @@ public class Token {
         RETURN("return"),
         TRUE("true"),
         FALSE("false"),
+        AND("&&"),
+        OR("||"),
 
         BREAK("BREAK"),
         CONTINUE("CONTINUE"),

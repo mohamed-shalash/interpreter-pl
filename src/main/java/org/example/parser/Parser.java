@@ -12,11 +12,13 @@ public class Parser {
     public static final int LOWEST = 1;
     public static final int EQUALS = 2;       // ==
     public static final int LESSGREATER = 3;  // > or <
-    public static final int SUM = 4;          // +
-    public static final int PRODUCT = 5;      // *
-    public static final int PREFIX = 6;       // -X or !X
-    public static final int CALL = 7;         // myFunction(X)
-    public static final int INDEX = 8;
+    public static final int OR = 4;           // || (New)
+    public static final int AND = 5;          // && (New)
+    public static final int SUM = 6;          // +
+    public static final int PRODUCT = 7;      // *
+    public static final int PREFIX = 8;       // -X or !X
+    public static final int CALL = 9;         // myFunction(X)
+    public static final int INDEX = 10;       // array[0]
     private Lexer l;
     private Token curToken;
     private Token peekToken;
@@ -42,6 +44,8 @@ public class Parser {
         precedences.put(Token.TokenType.LE, LESSGREATER);
         precedences.put(Token.TokenType.GE, LESSGREATER);
         precedences.put(Token.TokenType.DOT, INDEX);
+        precedences.put(Token.TokenType.AND, AND);
+        precedences.put(Token.TokenType.OR, OR);
     }
 
     public Parser(Lexer l) {
@@ -72,6 +76,8 @@ public class Parser {
         registerInfix(Token.TokenType.LE, this::parseInfixExpression);
         registerInfix(Token.TokenType.GE, this::parseInfixExpression);
         registerInfix(Token.TokenType.DOT, this::parseMemberExpression);
+        registerInfix(Token.TokenType.AND, this::parseInfixExpression);
+        registerInfix(Token.TokenType.OR, this::parseInfixExpression);
 
         registerPrefix(Token.TokenType.IDENT, this::parseIdentifier);
         registerPrefix(Token.TokenType.TRUE, this::parseBoolean);

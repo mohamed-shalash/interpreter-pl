@@ -232,9 +232,19 @@ public class Evaluator {
                 return nativeBoolToBooleanObject(areEqual(left, right));
             case "!=":
                 return nativeBoolToBooleanObject(!areEqual(left, right));
+            case "&&":
+                if (!(left instanceof BooleanObject) || !(right instanceof BooleanObject)) {
+                    return newError("type mismatch: " + type(left) + " && " + type(right));
+                }
+                return nativeBoolToBooleanObject(((BooleanObject) left).getValue() && ((BooleanObject) right).getValue());
+            case "||":
+                if (!(left instanceof BooleanObject) || !(right instanceof BooleanObject)) {
+                    return newError("type mismatch: " + type(left) + " || " + type(right));
+                }
+                return nativeBoolToBooleanObject(((BooleanObject) left).getValue() || ((BooleanObject) right).getValue());
         }
 
-        // Then check for type mismatch for other operators
+        // Then check for type mismatch for other operators (x == 10) && (3 > 1)
         if (!left.type().equals(right.type())) {
             return newError("type mismatch: " + left.type() + " " + operator + " " + right.type());
         }

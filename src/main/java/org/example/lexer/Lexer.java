@@ -82,6 +82,24 @@ public class Lexer {
             case '*':
                 tok = new Token(Token.TokenType.ASTERISK, String.valueOf(ch));
                 break;
+            case '&':
+                if (peekChar() == '&') {
+                    char currentChar = ch;
+                    readChar();
+                    tok = new Token(Token.TokenType.AND, String.valueOf(currentChar) + ch);
+                } else {
+                    tok = new Token(Token.TokenType.ILLEGAL, String.valueOf(ch)); // Single & not supported
+                }
+                break;
+            case '|':
+                if (peekChar() == '|') {
+                    char currentChar = ch;
+                    readChar();
+                    tok = new Token(Token.TokenType.OR, String.valueOf(currentChar) + ch);
+                } else {
+                    tok = new Token(Token.TokenType.ILLEGAL, String.valueOf(ch)); // Single | not supported
+                }
+                break;
             case '<':
                 if (peekChar() == '=') { // New: <=
                     char currentChar = ch;
