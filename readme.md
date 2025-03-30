@@ -43,7 +43,8 @@ Once the interpreter is running, you can enter commands or execute script files 
 
 <h3>Examples</h3>
 1. Class Declaration and Method Invocation
-```kotlin
+
+```java
 class Animal {
     let name;
     init(name) { this.name = name; }
